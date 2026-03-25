@@ -13,12 +13,10 @@ from openai import OpenAI
 from pydantic import BaseModel, Field
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
-PROFILE_FILE = BASE_DIR.parents[2] / "data" / "dog_profile.json"
-DIARY_FILE = DATA_DIR / "diary.json"
-EMBEDDINGS_FILE = DATA_DIR / "diary_embeddings.json"
-MEMORIAL_PHOTOS_FILE = DATA_DIR / "memorial_photos.json"
-CHAT_EPISODE_MEMORIES_FILE = DATA_DIR / "chat_episode_memories.json"
+PROJECT_ROOT = BASE_DIR.parent
+REPO_ROOT = BASE_DIR.parents[2]
+SOURCE_DATA_DIR = BASE_DIR / "data"
+SOURCE_PROFILE_FILE = REPO_ROOT / "data" / "dog_profile.json"
 ENV_FILE = BASE_DIR / ".env"
 
 CHAT_MODEL = "gpt-4.1-mini"
@@ -186,6 +184,22 @@ HISTORY_STORE_NEGATIVE_PATTERNS = {
 
 load_dotenv(ENV_FILE)
 
+runtime_data_root = os.getenv("WALWAL_DATA_DIR")
+RUNTIME_DATA_DIR = Path(runtime_data_root).expanduser() if runtime_data_root else None
+PROFILE_FILE = RUNTIME_DATA_DIR / "dog_profile.json" if RUNTIME_DATA_DIR else SOURCE_PROFILE_FILE
+DIARY_FILE = RUNTIME_DATA_DIR / "diary.json" if RUNTIME_DATA_DIR else SOURCE_DATA_DIR / "diary.json"
+EMBEDDINGS_FILE = (
+    RUNTIME_DATA_DIR / "diary_embeddings.json" if RUNTIME_DATA_DIR else SOURCE_DATA_DIR / "diary_embeddings.json"
+)
+MEMORIAL_PHOTOS_FILE = (
+    RUNTIME_DATA_DIR / "memorial_photos.json" if RUNTIME_DATA_DIR else SOURCE_DATA_DIR / "memorial_photos.json"
+)
+CHAT_EPISODE_MEMORIES_FILE = (
+    RUNTIME_DATA_DIR / "chat_episode_memories.json"
+    if RUNTIME_DATA_DIR
+    else SOURCE_DATA_DIR / "chat_episode_memories.json"
+)
+
 
 class DiaryEntryIn(BaseModel):
     pet_id: str
@@ -233,9 +247,19 @@ class HistoryMemoryResult(BaseModel):
 
 app = FastAPI(title="WALWAL Memorial Playground API")
 
+frontend_origin_env = os.getenv("FRONTEND_ORIGIN", "")
+allowed_origins = [
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+]
+allowed_origins.extend(
+    [origin.strip() for origin in frontend_origin_env.split(",") if origin.strip()]
+)
+allowed_origins = list(dict.fromkeys(allowed_origins))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4173", "http://127.0.0.1:4173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -253,6 +277,7 @@ def get_openai_client() -> OpenAI:
 
 
 def read_json(path: Path, fallback: dict):
+    ensure_json_file(path, fallback)
     try:
         with path.open("r", encoding="utf-8") as file:
             return json.load(file)
@@ -264,6 +289,31 @@ def write_json(path: Path, payload: dict):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as file:
         json.dump(payload, file, ensure_ascii=False, indent=2)
+
+
+def seed_json_file(path: Path, seed_path: Path | None, fallback: dict):
+    if path.exists():
+        return
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    if seed_path and seed_path.exists():
+        path.write_text(seed_path.read_text(encoding="utf-8"), encoding="utf-8")
+        return
+
+    with path.open("w", encoding="utf-8") as file:
+        json.dump(fallback, file, ensure_ascii=False, indent=2)
+
+
+def ensure_json_file(path: Path, fallback: dict):
+    seed_map = {
+        PROFILE_FILE: SOURCE_PROFILE_FILE,
+        DIARY_FILE: SOURCE_DATA_DIR / "diary.json",
+        EMBEDDINGS_FILE: SOURCE_DATA_DIR / "diary_embeddings.json",
+        MEMORIAL_PHOTOS_FILE: SOURCE_DATA_DIR / "memorial_photos.json",
+        CHAT_EPISODE_MEMORIES_FILE: SOURCE_DATA_DIR / "chat_episode_memories.json",
+    }
+    seed_json_file(path, seed_map.get(path), fallback)
 
 
 def serialize_entry(entry: dict) -> str:

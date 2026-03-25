@@ -32,6 +32,44 @@ npm run dev
 
 브라우저에서 보통 `http://localhost:4173` 으로 열립니다.
 
+## Render 배포
+
+### 프론트 Static Site
+
+- Root Directory: `Dae-hong/memorial-playground`
+- Build Command: `npm install && npm run build`
+- Publish Directory: `dist`
+- 환경변수: `VITE_API_BASE_URL=https://<백엔드-서비스>.onrender.com`
+
+`VITE_API_BASE_URL` 을 비워두면 로컬 개발에서는 Vite `/api` 프록시를 그대로 사용합니다.
+
+### 백엔드 Web Service
+
+- Root Directory: `Dae-hong/memorial-playground/backend`
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+- 환경변수:
+  - `OPENAI_API_KEY`
+  - `FRONTEND_ORIGIN=https://<프론트-서비스>.onrender.com`
+  - `WALWAL_DATA_DIR=/var/data/walwal`
+
+### Persistent Disk
+
+백엔드는 JSON 파일에 직접 저장하므로 Persistent Disk 연결을 권장합니다.
+
+- Mount Path 예시: `/var/data`
+- 앱 환경변수 `WALWAL_DATA_DIR` 값: `/var/data/walwal`
+
+이렇게 설정하면 아래 파일들이 Persistent Disk 아래에 저장됩니다.
+
+- `dog_profile.json`
+- `diary.json`
+- `diary_embeddings.json`
+- `memorial_photos.json`
+- `chat_episode_memories.json`
+
+처음 부팅할 때 파일이 없으면 저장소의 기본 JSON 데이터를 복사해 초기화합니다.
+
 ## 특징
 
 - 기존 팀 프론트와 분리됨
@@ -52,7 +90,7 @@ npm run dev
 
 - 데이터 파일:
   - 공용 프로필: `data/dog_profile.json`
-  - 로컬 육성일지: `backend/data/diary.json`
-  - 로컬 기억 인덱스: `backend/data/diary_embeddings.json`
-- 프론트는 `/api` 요청을 `http://127.0.0.1:8001` 로 프록시합니다.
+  - 기본 육성일지 시드: `backend/data/diary.json`
+  - 기본 기억 인덱스 시드: `backend/data/diary_embeddings.json`
+- 프론트는 `VITE_API_BASE_URL` 이 비어 있으면 `/api` 요청을 `http://127.0.0.1:8001` 로 프록시합니다.
 - 초기 상태로 되돌리고 싶으면 위 JSON 파일을 직접 수정하면 됩니다.

@@ -85,6 +85,11 @@ const INITIAL_FORM = {
 };
 
 const MEMORIAL_SESSION_STORAGE_KEY = 'walwal_memorial_session_id';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
+function buildApiUrl(path: string): string {
+  return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
+}
 
 function normalizeProfile(input: Partial<PetProfile> | undefined): PetProfile {
   const fallback = profileData.pet_profile;
@@ -176,9 +181,9 @@ export default function App() {
     const loadData = async () => {
       try {
         const [profileResponse, diaryResponse, memorialResponse] = await Promise.all([
-          fetch('/api/pet-profile'),
-          fetch('/api/diary-entries'),
-          fetch('/api/memorial-photos'),
+          fetch(buildApiUrl('/api/pet-profile')),
+          fetch(buildApiUrl('/api/diary-entries')),
+          fetch(buildApiUrl('/api/memorial-photos')),
         ]);
 
         if (!profileResponse.ok || !diaryResponse.ok || !memorialResponse.ok) {
@@ -274,7 +279,7 @@ export default function App() {
       setError(null);
 
       try {
-        const response = await fetch('/api/diary-entries', {
+        const response = await fetch(buildApiUrl('/api/diary-entries'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -317,7 +322,7 @@ export default function App() {
 
       try {
         const photoUrl = await readFileAsDataUrl(file);
-        const response = await fetch('/api/memorial-photos', {
+        const response = await fetch(buildApiUrl('/api/memorial-photos'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -373,7 +378,7 @@ export default function App() {
 
       try {
         const nextPhotoUrl = await readFileAsDataUrl(file);
-        const response = await fetch(`/api/memorial-photos/${selectedMemorialPhoto.photo_id}`, {
+        const response = await fetch(buildApiUrl(`/api/memorial-photos/${selectedMemorialPhoto.photo_id}`), {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -414,7 +419,7 @@ export default function App() {
       setMemorialPhotoError(null);
 
       try {
-        const response = await fetch(`/api/memorial-photos/${targetPhoto.photo_id}`, {
+        const response = await fetch(buildApiUrl(`/api/memorial-photos/${targetPhoto.photo_id}`), {
           method: 'DELETE',
         });
         const payload = (await response.json()) as {deleted?: boolean; detail?: string};
@@ -524,7 +529,7 @@ export default function App() {
       setEntryError(null);
 
       try {
-        const response = await fetch(`/api/diary-entries/${selectedEntry.entry_id}`, {
+        const response = await fetch(buildApiUrl(`/api/diary-entries/${selectedEntry.entry_id}`), {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -572,7 +577,7 @@ export default function App() {
       setEntryError(null);
 
       try {
-        const response = await fetch(`/api/diary-entries/${entryToDelete.entry_id}`, {
+        const response = await fetch(buildApiUrl(`/api/diary-entries/${entryToDelete.entry_id}`), {
           method: 'DELETE',
         });
 
@@ -612,7 +617,7 @@ export default function App() {
       setIsChatSubmitting(true);
 
       try {
-        const response = await fetch('/api/memorial-chat', {
+        const response = await fetch(buildApiUrl('/api/memorial-chat'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
