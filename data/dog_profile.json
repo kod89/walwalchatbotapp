@@ -1,0 +1,28 @@
+{
+    "pet_profile": {
+      "guardian_id": "USER-001",
+      "pet_id": "DOG-001",
+      "name": "초코",
+      "breed": "푸들",
+      "gender": "Female",
+      "is_neutered": true,
+      "birth_date": "2023-05-10",
+      "alive_state": true,
+      "weight_kg": 4.5,
+      "characteristics": {
+        "coat_color": "Brown",
+        "size_category": "Small",
+        "personality": ["사교적", "다혈질", "날쌘돌이"]
+      },
+      "health_records": {
+        "allergies": ["소고기", "유제품"],
+        "vaccination_completed": true,
+        "last_medical_check": "2025-12-15"
+      },
+      "preferences": {
+        "favorite_food": ["연어", "오이", "닭가슴살"],
+        "fears": ["천둥소리", "자동차"],
+        "walking_habit_min": 45
+      }
+    }
+  }
