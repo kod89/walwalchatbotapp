@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
-REPO_ROOT = BASE_DIR.parents[2]
+REPO_ROOT = BASE_DIR.parents[1]
 SOURCE_DATA_DIR = BASE_DIR / "data"
 SOURCE_PROFILE_FILE = REPO_ROOT / "data" / "dog_profile.json"
 ENV_FILE = BASE_DIR / ".env"
